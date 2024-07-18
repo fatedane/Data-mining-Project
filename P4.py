@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.decomposition import PCA
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, accuracy_score
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
 
 # Part IV: Clustering or Prediction
 def part_4_clustering_or_prediction():
@@ -30,8 +30,11 @@ def part_4_clustering_or_prediction():
                     n_clusters = st.slider("Choose number of clusters:", 2, 10, 3)
                     kmeans = KMeans(n_clusters=n_clusters)
                     clusters = kmeans.fit_predict(data[numerical_columns])
-                    data['Cluster'] = clusters
-                    
+
+                    # Create a copy of data for visualization without modifying original data
+                    data_vis = data.copy()
+                    data_vis['Cluster'] = clusters
+
                     st.write("Cluster centers:")
                     st.write(kmeans.cluster_centers_)
                 
@@ -40,40 +43,46 @@ def part_4_clustering_or_prediction():
                     min_samples = st.slider("Choose min_samples parameter:", 1, 20, 5)
                     dbscan = DBSCAN(eps=eps, min_samples=min_samples)
                     clusters = dbscan.fit_predict(data[numerical_columns])
-                    data['Cluster'] = clusters
+
+                    # Create a copy of data for visualization without modifying original data
+                    data_vis = data.copy()
+                    data_vis['Cluster'] = clusters
                 
                 # Visualization of Clusters
-                st.subheader("2D scatter plot of clusters")
-                pca = PCA(2)
-                pca_data = pca.fit_transform(data[numerical_columns])
-                fig, ax = plt.subplots()
-                scatter = ax.scatter(pca_data[:,0], pca_data[:,1], c=data['Cluster'])
-                legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
-                ax.add_artist(legend1)
-                st.pyplot(fig)
+                if clustering_algo in ["K-Means", "DBSCAN"]:
+                    st.subheader("2D scatter plot of clusters")
+                    pca = PCA(2)
+                    pca_data = pca.fit_transform(data[numerical_columns])
+                    pca_vis_data = pca.transform(data_vis[numerical_columns])
+                    fig, ax = plt.subplots()
+                    scatter = ax.scatter(pca_vis_data[:,0], pca_vis_data[:,1], c=data_vis['Cluster'])
+                    legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
+                    ax.add_artist(legend1)
+                    st.pyplot(fig)
 
-                st.subheader("3D scatter plot of clusters")
-                pca = PCA(3)
-                pca_data = pca.fit_transform(data[numerical_columns])
-                pca_df = pd.DataFrame(data=pca_data, columns=['PCA1', 'PCA2', 'PCA3'])
-                pca_df['Cluster'] = data['Cluster']
+                    st.subheader("3D scatter plot of clusters")
+                    pca = PCA(3)
+                    pca_data = pca.fit_transform(data[numerical_columns])
+                    pca_vis_data = pca.transform(data_vis[numerical_columns])
+                    pca_df = pd.DataFrame(data=pca_vis_data, columns=['PCA1', 'PCA2', 'PCA3'])
+                    pca_df['Cluster'] = data_vis['Cluster']
 
-                fig = px.scatter_3d(
-                    pca_df, x='PCA1', y='PCA2', z='PCA3',
-                    color='Cluster', title='3D scatter plot of clusters'
-                )
-                st.plotly_chart(fig)
-                
-                st.subheader("Cluster statistics")
-                st.write(data['Cluster'].value_counts())
+                    fig = px.scatter_3d(
+                        pca_df, x='PCA1', y='PCA2', z='PCA3',
+                        color='Cluster', title='3D scatter plot of clusters'
+                    )
+                    st.plotly_chart(fig)
+                    
+                    st.subheader("Cluster statistics")
+                    st.write(data_vis['Cluster'].value_counts())
 
             elif task == "Prediction":
                 prediction_type = st.selectbox("Choose a prediction type:", ["Regression", "Classification"])
                 if prediction_type == "Regression":
-                    data = data.drop(columns=[categorical_columns])
-                    target_column = st.selectbox("Select the target column for prediction:", data.columns.tolist())
-                    X = data.drop(columns=[target_column])
-                    y = data[target_column]
+                    data_reg = data.drop(columns=categorical_columns)
+                    target_column = st.selectbox("Select the target column for prediction:", data_reg.columns.tolist())
+                    X = data_reg.drop(columns=[target_column])
+                    y = data_reg[target_column]
 
                     regression_algo = st.selectbox("Choose a regression algorithm:", ["Linear Regression", "Ridge Regression", "Lasso Regression"])
 
@@ -98,10 +107,11 @@ def part_4_clustering_or_prediction():
                         st.write("Intercept:", model.intercept_)
 
                 elif prediction_type == "Classification":
-                    data_s = data.drop(columns=numerical_columns)
-                    target_column = st.selectbox("Select the target column for prediction:", data_s.columns.tolist())
-                    X = data.drop(columns=[target_column])
-                    y = data[target_column]
+                    data_vis2= data.copy()
+                    data_clf = data.drop(columns=numerical_columns)
+                    target_column = st.selectbox("Select the target column for prediction:", data_clf.columns.tolist())
+                    X = data_vis2.drop(columns=[target_column])
+                    y = data_vis2[target_column]
 
                     classification_algo = st.selectbox("Choose a classification algorithm:", ["K-Nearest Neighbors"])
                     

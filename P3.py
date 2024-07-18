@@ -14,23 +14,38 @@ def part_3_visualization():
         # Histograms
         st.subheader("Histograms of Numerical Features")
         if len(numerical_columns) > 1:
-            for col in numerical_columns:
-                fig, ax = plt.subplots()
-                sns.histplot(data[col], ax=ax, kde=True)
-                st.pyplot(fig)
+            fig, axes = plt.subplots(nrows=1, ncols=len(numerical_columns), figsize=(15, 5))
+            for i, col in enumerate(numerical_columns):
+                sns.histplot(data[col], kde=True, ax=axes[i])
+            st.pyplot(fig)
         else:
             st.write("Histograms cannot be plotted as there is only one numerical column.")
 
         # Box Plots
         st.subheader("Box plots of Numerical Features")
         if len(numerical_columns) > 1:
-            for col in numerical_columns:
-                fig, ax = plt.subplots()
-                sns.boxplot(x=data[col], ax=ax)
-                st.pyplot(fig)
+            fig, axes = plt.subplots(nrows=1, ncols=len(numerical_columns), figsize=(15, 5))
+            for i, col in enumerate(numerical_columns):
+                sns.boxplot(x=data[col], ax=axes[i])
+            st.pyplot(fig)
         else:
             st.write("Box plots cannot be plotted as there is only one numerical column.")
 
+        # Scatter Plots
+        st.subheader("Scatter plots of Numerical Features")
+        if len(numerical_columns) > 1:
+            fig, axes = plt.subplots(nrows=len(numerical_columns), ncols=len(numerical_columns), figsize=(15, 15))
+            for i, col1 in enumerate(numerical_columns):
+                for j, col2 in enumerate(numerical_columns):
+                    if i != j:
+                        sns.scatterplot(x=data[col1], y=data[col2], ax=axes[i,j])
+                    else:
+                        axes[i,j].text(0.5, 0.5, col1, fontsize=12, ha='center')
+                        axes[i,j].axis('off')
+            st.pyplot(fig)
+        else:
+            st.write("Scatter plots cannot be plotted as there is only one numerical column.")
+            
         # Correlation Matrix
         st.subheader("Correlation Matrix")
         if len(numerical_columns) > 1:
